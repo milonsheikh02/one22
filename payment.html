@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Options</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .payment-option {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .crypto-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #444;
+        }
+        
+        .address {
+            font-family: monospace;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-size: 0.9em;
+        }
+        
+        .qr-container {
+            margin: 15px 0;
+        }
+        
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            border: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            background-color: white;
+        }
+        
+        .qr-code canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .copy-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .copy-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .copy-btn.copied {
+            background-color: #2196F3;
+        }
+        
+        .timer {
+            font-weight: bold;
+            color: #e74c3c;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Payment Options</h1>
+        <div id="order-details" style="background-color: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #007bff; display: none;">
+            <h3>Order Information</h3>
+            <p><strong>Order ID:</strong> <span id="order-id"></span></p>
+            <p><strong>Sending:</strong> <span id="send-amount"></span> <span id="send-coin"></span></p>
+            <p><strong>Receiving:</strong> <span id="receive-method"></span> to <span id="receive-wallet"></span></p>
+            <p><strong>Total Amount:</strong> <span id="total-amount"></span> USD</p>
+        </div>
+        
+        <div id="payment-options">
+            <div class="payment-option" id="eth-option" style="display:none;">
+                <div class="crypto-title">Ethereum (ETH) (ERC20)</div>
+                <div class="timer" id="eth-timer">Time remaining: <span id="eth-countdown">20:00</span></div>
+                <div class="address" id="eth-address">0x2bb183CC12315a2acd0bfA89e815E1fC2C58815B</div>
+                <div class="qr-container">
+                    <div class="qr-code" id="eth-qr"></div>
+                </div>
+                <button class="copy-btn" onclick="copyAddress('eth-address')">Copy Address</button>
+                <button class="copy-btn" onclick="showGuide('eth')" style="margin-left: 10px;">How to Send</button>
+            </div>
+            
+            <div class="payment-option" id="btc-option" style="display:none;">
+                <div class="crypto-title">Bitcoin (BTC) (BTC)</div>
+                <div class="timer" id="btc-timer">Time remaining: <span id="btc-countdown">20:00</span></div>
+                <div class="address" id="btc-address">bc1qk263esw8mxpcmmml0mus7nfnscp9fryyqqzgwq</div>
+                <div class="qr-container">
+                    <div class="qr-code" id="btc-qr"></div>
+                </div>
+                <button class="copy-btn" onclick="copyAddress('btc-address')">Copy Address</button>
+                <button class="copy-btn" onclick="showGuide('btc')" style="margin-left: 10px;">How to Send</button>
+            </div>
+            
+            <div class="payment-option" id="tron-option" style="display:none;">
+                <div class="crypto-title">Tron (TRX) (TRC20)</div>
+                <div class="timer" id="tron-timer">Time remaining: <span id="tron-countdown">20:00</span></div>
+                <div class="address" id="tron-address">TUop15AqkgbB7uXjiHDp1XDpDfBJEQUB7w</div>
+                <div class="qr-container">
+                    <div class="qr-code" id="tron-qr"></div>
+                </div>
+                <button class="copy-btn" onclick="copyAddress('tron-address')">Copy Address</button>
+                <button class="copy-btn" onclick="showGuide('tron')" style="margin-left: 10px;">How to Send</button>
+            </div>
+        </div>
+        
+        <div id="no-selection-message" style="text-align: center; padding: 20px; display: block;">
+            <p><strong>Please select a cryptocurrency to send.</strong></p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // Generate QR codes for each cryptocurrency
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ethereum QR code
+            new QRCode(document.getElementById("eth-qr"), {
+                text: "ethereum:0x2bb183CC12315a2acd0bfA89e815E1fC2C58815B",
+                width: 180,
+                height: 180,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // Bitcoin QR code
+            new QRCode(document.getElementById("btc-qr"), {
+                text: "bitcoin:bc1qk263esw8mxpcmmml0mus7nfnscp9fryyqqzgwq",
+                width: 180,
+                height: 180,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // Tron QR code
+            new QRCode(document.getElementById("tron-qr"), {
+                text: "tron:TUop15AqkgbB7uXjiHDp1XDpDfBJEQUB7w",
+                width: 180,
+                height: 180,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        });
+        
+        // Function to copy address to clipboard
+        function copyAddress(elementId) {
+            const addressElement = document.getElementById(elementId);
+            const address = addressElement.textContent;
+            
+            navigator.clipboard.writeText(address).then(function() {
+                const btn = event.target;
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                
+                setTimeout(function() {
+                    btn.textContent = 'Copy Address';
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy: ', err);
+            });
+        }
+        
+        // Function to show a payment guide
+        function showGuide(cryptoType) {
+            let guideText = '';
+            
+            switch(cryptoType) {
+                case 'eth':
+                    guideText = 'To send Ethereum (ETH): Open your ETH wallet, scan the QR code or copy the address, enter the amount, and confirm the transaction. You have 20 minutes to complete the payment.';
+                    break;
+                case 'btc':
+                    guideText = 'To send Bitcoin (BTC): Open your BTC wallet, scan the QR code or copy the address, enter the amount, and confirm the transaction. You have 20 minutes to complete the payment.';
+                    break;
+                case 'tron':
+                    guideText = 'To send Tron (TRX): Open your TRX wallet, scan the QR code or copy the address, enter the amount, and confirm the transaction. You have 20 minutes to complete the payment.';
+                    break;
+                default:
+                    guideText = 'Open your wallet app, scan the QR code or copy the address, enter the amount, and confirm the transaction. You have 20 minutes to complete the payment.';
+            }
+            
+            alert(guideText);
+        }
+        
+        // Timer functionality
+        function startTimer(duration, display) {
+            var timer = duration, minutes, seconds;
+            var interval = setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(interval);
+                    display.textContent = "EXPIRED";
+                    display.parentElement.style.color = "red";
+                    alert("Payment time expired! Please refresh the page to start again.");
+                }
+            }, 1000);
+        }
+
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+        
+        // Load order details from URL parameters or show general payment info
+        function loadOrderDetails() {
+            const orderId = getUrlParameter('order_id');
+            
+            if (orderId) {
+                // If there's an order ID in the URL, display it
+                document.getElementById('order-id').textContent = orderId;
+                
+                // Try to extract other parameters from URL hash or search params
+                const urlParams = new URLSearchParams(window.location.search);
+                const sendAmount = urlParams.get('amount') || 'Pending';
+                const sendCoin = urlParams.get('coin') || 'Pending';
+                const receiveMethod = urlParams.get('method') || 'Pending';
+                const totalAmount = urlParams.get('usd') || 'Pending';
+                const selectedCoin = urlParams.get('selected_coin') || '';
+                
+                document.getElementById('send-amount').textContent = sendAmount;
+                document.getElementById('send-coin').textContent = sendCoin;
+                document.getElementById('receive-method').textContent = receiveMethod;
+                document.getElementById('receive-wallet').textContent = 'Pending';
+                document.getElementById('total-amount').textContent = totalAmount;
+                
+                document.getElementById('order-details').style.display = 'block';
+                
+                // Show only the relevant payment option based on selected coin
+                showRelevantPaymentOption(selectedCoin);
+            } else {
+                // If no order ID, show general payment instructions
+                document.getElementById('order-details').innerHTML = '<h3>Payment Instructions</h3><p>Select the appropriate cryptocurrency to send your payment.</p>';
+                document.getElementById('order-details').style.display = 'block';
+                
+                // Show all options when accessed directly
+                document.getElementById('eth-option').style.display = 'block';
+                document.getElementById('btc-option').style.display = 'block';
+                document.getElementById('tron-option').style.display = 'block';
+                document.getElementById('no-selection-message').style.display = 'none';
+            }
+        }
+        
+        // Function to show only the relevant payment option
+        function showRelevantPaymentOption(selectedCoin) {
+            // Hide all options first
+            document.getElementById('eth-option').style.display = 'none';
+            document.getElementById('btc-option').style.display = 'none';
+            document.getElementById('tron-option').style.display = 'none';
+            document.getElementById('no-selection-message').style.display = 'none';
+            
+            // Show only the relevant option based on selected coin
+            if (selectedCoin) {
+                switch(selectedCoin.toUpperCase()) {
+                    case 'ETH':
+                        document.getElementById('eth-option').style.display = 'block';
+                        break;
+                    case 'BTC':
+                        document.getElementById('btc-option').style.display = 'block';
+                        break;
+                    case 'TRX':
+                    case 'TRON':
+                        document.getElementById('tron-option').style.display = 'block';
+                        break;
+                    default:
+                        // If unknown coin, show all options
+                        document.getElementById('eth-option').style.display = 'block';
+                        document.getElementById('btc-option').style.display = 'block';
+                        document.getElementById('tron-option').style.display = 'block';
+                        break;
+                }
+            } else {
+                // If no specific coin selected, show all options
+                document.getElementById('eth-option').style.display = 'block';
+                document.getElementById('btc-option').style.display = 'block';
+                document.getElementById('tron-option').style.display = 'block';
+            }
+        }
+        
+        // Initialize timers when page loads
+        window.onload = function () {
+            // Load order details if available
+            loadOrderDetails();
+            
+            var twentyMinutes = 60 * 20; // 20 minutes in seconds
+            
+            var ethDisplay = document.querySelector('#eth-countdown');
+            var btcDisplay = document.querySelector('#btc-countdown');
+            var tronDisplay = document.querySelector('#tron-countdown');
+            
+            startTimer(twentyMinutes, ethDisplay);
+            startTimer(twentyMinutes, btcDisplay);
+            startTimer(twentyMinutes, tronDisplay);
+        };
+    </script>
+</body>
+</html>
